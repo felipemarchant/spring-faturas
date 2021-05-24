@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+	<script type="text/javascript" th:fragment="javascript">
+		$(document).ready(function() {
+
+			$("#buscar_produto").autocomplete({
+
+				source : function(request, response) {
+					$.ajax({
+						url : "/fatura/carregar-produtos/" + request.term,
+						dataType : "json",
+						data : {
+							term : request.term
+						},
+						success : function(data) {
+							response($.map(data, function(item) {
+								return {
+									value : item.id,
+									label : item.nome,
+									preco : item.preco,
+								};
+							}));
+						},
+					});
+				},
+				select : function(event, ui) {
+					
+					if(itemsHelper.hasProduto(ui.item.value)){
+						itemsHelper.incrementaResultado(ui.item.value, ui.item.preco);
+						return false;
+					}
+					
+					var linea = $("#planilhaItemsFatura").html();
+					
+					linea = linea.replace(/{ID}/g, ui.item.value);
+					linea = linea.replace(/{NOME}/g, ui.item.label);
+					linea = linea.replace(/{PRECO}/g, ui.item.preco);
+					
+					$("#carregarItemProdutos tbody").append(linea);
+					itemsHelper.calcularImporte(ui.item.value, ui.item.preco, 1);
+
+					return false;
+				}
+			});
+			
+			$("form").submit(function(){
+				$("#planilhaItemsFatura").remove();
+				return;
+			});
+
+		});
+		
+		var itemsHelper = {
+			calcularImporte: function(id, preco, resultado){
+				$("#total_importe_" + id).html(parseInt(preco) * parseInt(resultado));
+				this.calcularGranTotal();
+			},
+			hasProduto: function(id){
+				
+				var resultado = false;
+				
+				$('input[name="item_id[]"]').each(function(){
+					if(parseInt(id) == parseInt($(this).val()) ){
+						resultado = true;
+					}
+				});
+				
+				return resultado;
+			},
+			incrementaResultado: function(id, precio){
+				var resultado = $("#resultado_" + id).val() ? parseInt($("#resultado_" + id).val()) : 0;
+				$("#resultado_" + id).val(++resultado);
+				this.calcularImporte(id, precio, resultado);
+			},
+			eliminarLineaFatura: function(id){
+				$("#row_" + id).remove();
+				this.calcularGranTotal();
+			},
+			calcularGranTotal: function(){
+				var total = 0;
+				
+				$('span[id^="total_importe_"]').each(function(){
+					total += parseInt($(this).html());
+				});
+				
+				$('#gran_total').html(total);
+			}
+		}
+	</script>
+</body>
+</html>

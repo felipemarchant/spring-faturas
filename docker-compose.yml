@@ -1,0 +1,14 @@
+version: '3.3'
+services:
+  spring-fatura-db:
+    container_name: spring-fatura-db
+    image: mysql:5.6
+    environment:
+      MYSQL_ROOT_PASSWORD: spring-fatura
+      MYSQL_DATABASE: spring-fatura
+      MYSQL_USER: spring-fatura
+      MYSQL_PASSWORD: spring-fatura
+    ports:
+      - 3309:3306
+    volumes:
+      - ./mysql:/var/lib/mysql
